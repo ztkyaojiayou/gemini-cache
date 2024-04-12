@@ -4,7 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.mirson.gemini.cache.common.CacheConfigProperties;
 import com.mirson.gemini.cache.core.cache.CacheService;
-import com.mirson.gemini.cache.core.notify.RedisSendService;
+import com.mirson.gemini.cache.core.notify.NotifyService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ public class CaffeineCacheServiceImpl extends AbstractFirstCacheService {
      * Redis 发送服务接口
      * 用于保持缓存的一致性
      */
-    private RedisSendService redisSendService;
+    private NotifyService notifyService;
 
     /**
      * 缓存配置参数
@@ -39,10 +39,10 @@ public class CaffeineCacheServiceImpl extends AbstractFirstCacheService {
     private CacheConfigProperties cacheConfigProperties;
 
     public CaffeineCacheServiceImpl(CacheService cacheService,
-                                    RedisSendService redisSendService,
+                                    NotifyService notifyService,
                                     CacheConfigProperties cacheConfigProperties) {
         super(cacheService);
-        this.redisSendService = redisSendService;
+        this.notifyService = notifyService;
         this.cacheConfigProperties = cacheConfigProperties;
     }
 
@@ -56,7 +56,7 @@ public class CaffeineCacheServiceImpl extends AbstractFirstCacheService {
             clearAndSend(cacheName, null, false);
         }
         // 发送Redis缓存更新消息
-        redisSendService.sendMessage(cacheNames, null);
+        notifyService.sendMessage(cacheNames, null);
     }
 
     /**
@@ -70,7 +70,7 @@ public class CaffeineCacheServiceImpl extends AbstractFirstCacheService {
             clearAndSend(cacheName, key, false);
         }
         // 发送Redis缓存更新消息
-        redisSendService.sendMessage(cacheNames, key);
+        notifyService.sendMessage(cacheNames, key);
     }
 
 
@@ -85,7 +85,7 @@ public class CaffeineCacheServiceImpl extends AbstractFirstCacheService {
             saveAndSend(cacheName, key, cacheValue, false);
         }
         // 发送Redis缓存更新消息, 所有cacheNames统一发送
-        redisSendService.sendMessage(cacheNames, key);
+        notifyService.sendMessage(cacheNames, key);
     }
 
 
@@ -100,7 +100,6 @@ public class CaffeineCacheServiceImpl extends AbstractFirstCacheService {
             clearAndSend(cacheName, key, false);
         }
     }
-
 
     /**
      * 保存本地缓存
@@ -119,7 +118,7 @@ public class CaffeineCacheServiceImpl extends AbstractFirstCacheService {
 
         if (isNeedSend) {
             // 发送Redis缓存更新消息
-            redisSendService.sendMessage(cacheName, key);
+            notifyService.sendMessage(cacheName, key);
         }
     }
 
@@ -173,7 +172,7 @@ public class CaffeineCacheServiceImpl extends AbstractFirstCacheService {
 
         if (isNeedSend) {
             // 发送Redis缓存更新消息
-            redisSendService.sendMessage(cacheName, key);
+            notifyService.sendMessage(cacheName, key);
         }
     }
 

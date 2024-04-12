@@ -4,8 +4,8 @@ import com.mirson.gemini.cache.common.CacheConfigProperties;
 import com.mirson.gemini.cache.common.NamedThreadFactory;
 import com.mirson.gemini.cache.core.cache.CacheService;
 import com.mirson.gemini.cache.core.cache.first.CaffeineCacheServiceImpl;
-import com.mirson.gemini.cache.core.notify.RedisSendService;
-import com.mirson.gemini.cache.core.notify.RedisSendServiceImpl;
+import com.mirson.gemini.cache.core.notify.NotifyService;
+import com.mirson.gemini.cache.core.notify.NotifyByRedisImpl;
 import com.mirson.gemini.cache.core.cache.second.RedisCacheServiceImpl;
 import com.mirson.gemini.cache.core.listener.CacheMessageListener;
 import com.mirson.gemini.cache.utils.SpringUtils;
@@ -155,10 +155,10 @@ public class CacheAutoConfiguration {
      * @return
      */
     @Bean
-    public RedisSendService redisSendService(CacheConfigProperties cacheConfigProperties,
-                                             RedissonClient redissonClient) {
-        RedisSendService redisSendService = new RedisSendServiceImpl(cacheConfigProperties, redissonClient);
-        return redisSendService;
+    public NotifyService redisSendService(CacheConfigProperties cacheConfigProperties,
+                                          RedissonClient redissonClient) {
+        NotifyService notifyService = new NotifyByRedisImpl(cacheConfigProperties, redissonClient);
+        return notifyService;
     }
 
     /**
@@ -168,13 +168,13 @@ public class CacheAutoConfiguration {
      */
     @Bean
     public CacheService cacheService(RedissonClient redissonClient,
-                                     RedisSendService redisSendService,
+                                     NotifyService notifyService,
                                      ExecutorService redisExecutor) {
         CacheService cacheService = null;
         // 判断是否开启二级缓存
         if (cacheConfigProperties.isEnableSecondCache()) {
             CacheService redisCacheService = new RedisCacheServiceImpl(redissonClient, redisExecutor, cacheConfigProperties);
-            cacheService = new CaffeineCacheServiceImpl(redisCacheService, redisSendService, cacheConfigProperties);
+            cacheService = new CaffeineCacheServiceImpl(redisCacheService, notifyService, cacheConfigProperties);
         } else {
             cacheService = new RedisCacheServiceImpl(redissonClient, redisExecutor, cacheConfigProperties);
         }

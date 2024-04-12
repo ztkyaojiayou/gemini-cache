@@ -8,32 +8,34 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *  Redis发送服务实现接口
+ * Redis发送服务实现接口
  *
  * @author mirson
  * @date 2021/9/26
  */
-public class RedisSendServiceImpl implements RedisSendService {
+public class NotifyByRedisImpl implements NotifyService {
 
-    private static final Logger logger = LoggerFactory.getLogger(RedisSendServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(NotifyByRedisImpl.class);
 
-     /**
-      * 缓存配置属性
-      */
-     private CacheConfigProperties cacheConfigProperties;
+    /**
+     * 缓存配置属性
+     */
+    private CacheConfigProperties cacheConfigProperties;
 
-     /**
-      * Redis操作接口
-      */
-     private RedissonClient redissonClient;
+    /**
+     * Redis操作接口
+     */
+    private RedissonClient redissonClient;
 
-     public RedisSendServiceImpl(CacheConfigProperties cacheConfigProperties,
-                                 RedissonClient redissonClient){
-         this.cacheConfigProperties = cacheConfigProperties;
-         this.redissonClient = redissonClient;
-     }
+    public NotifyByRedisImpl(CacheConfigProperties cacheConfigProperties,
+                             RedissonClient redissonClient) {
+        this.cacheConfigProperties = cacheConfigProperties;
+        this.redissonClient = redissonClient;
+    }
+
     /**
      * 发送缓存变更消息
+     *
      * @param cacheNames
      */
     @Override
@@ -43,6 +45,7 @@ public class RedisSendServiceImpl implements RedisSendService {
 
     /**
      * 发送缓存变更消息
+     *
      * @param cacheName
      */
     @Override
@@ -52,6 +55,7 @@ public class RedisSendServiceImpl implements RedisSendService {
 
     /**
      * 发送缓存变更消息
+     *
      * @param cacheName
      * @param key
      */
@@ -62,6 +66,7 @@ public class RedisSendServiceImpl implements RedisSendService {
 
     /**
      * 发送缓存变更消息
+     *
      * @param cacheNames
      * @param key
      */
