@@ -1,7 +1,7 @@
-package com.mirson.gemini.cache.service.listener;
+package com.mirson.gemini.cache.core.listener;
 
-import com.mirson.gemini.cache.config.CacheConfigProperties;
-import com.mirson.gemini.cache.service.cache.first.CaffeineCacheServiceImpl;
+import com.mirson.gemini.cache.common.CacheConfigProperties;
+import com.mirson.gemini.cache.core.cache.first.CaffeineCacheServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.listener.MessageListener;
 

@@ -1,4 +1,4 @@
-package com.mirson.gemini.cache.config;
+package com.mirson.gemini.cache.common;
 
 import java.util.Locale;
 import java.util.concurrent.ThreadFactory;

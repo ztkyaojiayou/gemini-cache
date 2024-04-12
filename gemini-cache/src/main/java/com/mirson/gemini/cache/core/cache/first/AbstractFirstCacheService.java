@@ -1,6 +1,6 @@
-package com.mirson.gemini.cache.service.cache.first;
+package com.mirson.gemini.cache.core.cache.first;
 
-import com.mirson.gemini.cache.service.cache.CacheService;
+import com.mirson.gemini.cache.core.cache.CacheService;
 
 /**
  * 一级缓存实现的抽象类

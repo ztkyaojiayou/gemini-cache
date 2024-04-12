@@ -1,10 +1,10 @@
-package com.mirson.gemini.cache.service.cache.first;
+package com.mirson.gemini.cache.core.cache.first;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.mirson.gemini.cache.config.CacheConfigProperties;
-import com.mirson.gemini.cache.service.cache.CacheService;
-import com.mirson.gemini.cache.service.cache.notify.RedisSendService;
+import com.mirson.gemini.cache.common.CacheConfigProperties;
+import com.mirson.gemini.cache.core.cache.CacheService;
+import com.mirson.gemini.cache.core.notify.RedisSendService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

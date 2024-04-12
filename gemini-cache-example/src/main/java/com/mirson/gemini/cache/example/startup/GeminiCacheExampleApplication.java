@@ -10,6 +10,7 @@ import org.springframework.context.annotation.ComponentScan;
 
 /**
  * 缓存示例启动程序
+ * @author zoutongkun
  */
 @SpringBootApplication
 //需要把starter所在的包扫描进去，否则无法加载对应的bean，

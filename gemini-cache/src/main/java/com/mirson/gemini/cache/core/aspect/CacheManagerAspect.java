@@ -1,9 +1,10 @@
-package com.mirson.gemini.cache.service.cache;
+package com.mirson.gemini.cache.core.aspect;
 
 import com.mirson.gemini.cache.annotation.CacheDelete;
 import com.mirson.gemini.cache.annotation.CacheUpdate;
 import com.mirson.gemini.cache.annotation.CacheAdd;
-import com.mirson.gemini.cache.config.CacheConfigProperties;
+import com.mirson.gemini.cache.common.CacheConfigProperties;
+import com.mirson.gemini.cache.core.cache.CacheService;
 import com.mirson.gemini.cache.utils.CacheUtil;
 import com.mirson.gemini.cache.utils.KeyGenerators;
 import com.mirson.gemini.cache.utils.SpElUtil;

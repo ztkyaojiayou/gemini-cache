@@ -1,7 +1,7 @@
-package com.mirson.gemini.cache.service.cache.notify;
+package com.mirson.gemini.cache.core.notify;
 
-import com.mirson.gemini.cache.config.CacheConfigProperties;
-import com.mirson.gemini.cache.service.listener.CacheMessage;
+import com.mirson.gemini.cache.common.CacheConfigProperties;
+import com.mirson.gemini.cache.core.listener.CacheMessage;
 import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;

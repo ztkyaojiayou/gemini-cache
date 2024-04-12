@@ -1,4 +1,4 @@
-package com.mirson.gemini.cache.config; /**
+package com.mirson.gemini.cache.common; /**
  * 
  *
  * @author mirson

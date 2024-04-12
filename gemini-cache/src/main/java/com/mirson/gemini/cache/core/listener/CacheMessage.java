@@ -1,6 +1,6 @@
-package com.mirson.gemini.cache.service.listener;
+package com.mirson.gemini.cache.core.listener;
 
-import com.mirson.gemini.cache.config.CacheConfigProperties;
+import com.mirson.gemini.cache.common.CacheConfigProperties;
 import lombok.Data;
 
 import java.io.Serializable;
