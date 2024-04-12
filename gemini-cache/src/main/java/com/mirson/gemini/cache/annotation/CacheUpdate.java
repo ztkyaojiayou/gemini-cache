@@ -10,31 +10,31 @@ import java.lang.annotation.Target;
 
 import static com.mirson.gemini.cache.utils.KeyGenerators.SHA;
 
-
 /**
- * 新增缓存
+ * 缓存更新
+ * @author zoutongkun
  */
-@Target({ElementType.METHOD})
+@Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Cacheable {
+public @interface CacheUpdate {
 
     /**
      * 缓存名称
      * @return
      */
-    String cacheName() default "";
+    String[] cacheNames() default {};
 
     /**
-     * 缓存生命周期 (单位：秒）
+     * 缓存生命周期(单位：秒）
      * @return
      */
     long TTL() default 0;
 
     /**
-     * 缓存KEY(唯一性）
+     * 缓存key（唯一性）
      * @return
      */
-    String keyExpression() default "";
+    String keyExpression();
 
     /**
      * 是否异步
@@ -43,7 +43,7 @@ public @interface Cacheable {
     boolean isAsync() default false;
 
     /**
-     * key生成器
+     * 缓存KEY生成器
      * @return
      */
     KeyGenerators keyGenerator() default SHA;

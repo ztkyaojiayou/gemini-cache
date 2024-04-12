@@ -1,8 +1,8 @@
 package com.mirson.gemini.cache.service.cache;
 
 import com.mirson.gemini.cache.annotation.CacheDelete;
-import com.mirson.gemini.cache.annotation.CachePut;
-import com.mirson.gemini.cache.annotation.Cacheable;
+import com.mirson.gemini.cache.annotation.CacheUpdate;
+import com.mirson.gemini.cache.annotation.CacheAdd;
 import com.mirson.gemini.cache.config.CacheConfigProperties;
 import com.mirson.gemini.cache.utils.CacheUtil;
 import com.mirson.gemini.cache.utils.KeyGenerators;
@@ -46,11 +46,11 @@ public class CacheManagerAspect {
     @Autowired
     private CacheConfigProperties cacheConfigProperties;
 
-    @Pointcut("execution(* com.mirson..*.*(..)) && @annotation(com.mirson.gemini.cache.annotation.Cacheable)")
+    @Pointcut("execution(* com.mirson..*.*(..)) && @annotation(com.mirson.gemini.cache.annotation.CacheAdd)")
     public void executionOfCacheableMethod() {
     }
 
-    @Pointcut("execution(* com.mirson..*.*(..)) && @annotation(com.mirson.gemini.cache.annotation.CachePut)")
+    @Pointcut("execution(* com.mirson..*.*(..)) && @annotation(com.mirson.gemini.cache.annotation.CacheUpdate)")
     public void executionOfCachePutMethod() {
     }
 
@@ -69,15 +69,15 @@ public class CacheManagerAspect {
             if (!cacheConfigProperties.isEnableCache()) {
                 return;
             }
-            CachePut cachePutAnnotation = getAnnotation(joinPoint, CachePut.class);
+            CacheUpdate cacheUpdateAnnotation = getAnnotation(joinPoint, CacheUpdate.class);
             Object cacheKey = spElUtil
-                    .parseAndGetCacheKeyFromExpression(cachePutAnnotation.keyExpression(), returnObject,
-                            joinPoint.getArgs(), cachePutAnnotation.keyGenerator());
+                    .parseAndGetCacheKeyFromExpression(cacheUpdateAnnotation.keyExpression(), returnObject,
+                            joinPoint.getArgs(), cacheUpdateAnnotation.keyGenerator());
 
-            if (cachePutAnnotation.isAsync()) {
-                redisCacheService.saveInRedisAsync(cachePutAnnotation.cacheNames(), cacheKey, returnObject, cachePutAnnotation.TTL());
+            if (cacheUpdateAnnotation.isAsync()) {
+                redisCacheService.saveInRedisAsync(cacheUpdateAnnotation.cacheNames(), cacheKey, returnObject, cacheUpdateAnnotation.TTL());
             } else {
-                redisCacheService.save(cachePutAnnotation.cacheNames(), cacheKey, returnObject, cachePutAnnotation.TTL());
+                redisCacheService.save(cacheUpdateAnnotation.cacheNames(), cacheKey, returnObject, cacheUpdateAnnotation.TTL());
             }
 
         } catch (Exception e) {
@@ -122,22 +122,22 @@ public class CacheManagerAspect {
 
         Object returnObject = null;
 
-        Cacheable cacheableAnnotation = null;
+        CacheAdd cacheAddAnnotation = null;
         Object cacheKey = null;
         try {
-            cacheableAnnotation = getAnnotation(proceedingJoinPoint, Cacheable.class);
+            cacheAddAnnotation = getAnnotation(proceedingJoinPoint, CacheAdd.class);
 
-            KeyGenerators keyGenerator = cacheableAnnotation.keyGenerator();
+            KeyGenerators keyGenerator = cacheAddAnnotation.keyGenerator();
 
-            if (StringUtils.isEmpty(cacheableAnnotation.keyExpression())) {
+            if (StringUtils.isEmpty(cacheAddAnnotation.keyExpression())) {
                 cacheKey = CacheUtil.buildCacheKey(proceedingJoinPoint.getArgs());
             } else {
                 cacheKey = spElUtil
-                        .parseAndGetCacheKeyFromExpression(cacheableAnnotation.keyExpression(), null,
+                        .parseAndGetCacheKeyFromExpression(cacheAddAnnotation.keyExpression(), null,
                                 proceedingJoinPoint.getArgs(), keyGenerator);
             }
             //从缓存中获取数据
-            returnObject = redisCacheService.getFromCache(cacheableAnnotation.cacheName(), cacheKey);
+            returnObject = redisCacheService.getFromCache(cacheAddAnnotation.cacheName(), cacheKey);
 
         } catch (Exception e) {
             log.error("getAndSaveInCache # Redis op Exception while trying to get from cache ## " + e.getMessage(), e);
@@ -149,15 +149,15 @@ public class CacheManagerAspect {
 
             if (returnObject != null) {
                 try {
-                    assert cacheableAnnotation != null;
-                    if (cacheableAnnotation.isAsync()) {
+                    assert cacheAddAnnotation != null;
+                    if (cacheAddAnnotation.isAsync()) {
                         redisCacheService
-                                .saveInRedisAsync(new String[]{cacheableAnnotation.cacheName()}, cacheKey,
-                                        returnObject, cacheableAnnotation.TTL());
+                                .saveInRedisAsync(new String[]{cacheAddAnnotation.cacheName()}, cacheKey,
+                                        returnObject, cacheAddAnnotation.TTL());
                     } else {
                         redisCacheService
-                                .save(new String[]{cacheableAnnotation.cacheName()}, cacheKey,
-                                        returnObject, cacheableAnnotation.TTL());
+                                .save(new String[]{cacheAddAnnotation.cacheName()}, cacheKey,
+                                        returnObject, cacheAddAnnotation.TTL());
                     }
                 } catch (Exception e) {
                     log.error("getAndSaveInCache # Exception occurred while trying to save data in redis##" + e.getMessage(),

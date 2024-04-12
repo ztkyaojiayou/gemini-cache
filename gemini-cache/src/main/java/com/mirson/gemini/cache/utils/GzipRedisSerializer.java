@@ -16,10 +16,10 @@ import java.util.zip.GZIPOutputStream;
  * Gzip压缩
  * @author zoutongkun
  */
-public class GenericGZIPRedisSerializer
+public class GzipRedisSerializer
         implements RedisSerializer<Object> {
 
-    private static final Logger logger = LoggerFactory.getLogger(GenericGZIPRedisSerializer.class);
+    private static final Logger logger = LoggerFactory.getLogger(GzipRedisSerializer.class);
 
     @Override
     public byte[] serialize(Object object) {

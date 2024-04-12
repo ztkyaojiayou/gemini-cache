@@ -1,7 +1,7 @@
 package com.mirson.gemini.cache.example.service.impl;
 
-import com.mirson.gemini.cache.annotation.CachePut;
-import com.mirson.gemini.cache.annotation.Cacheable;
+import com.mirson.gemini.cache.annotation.CacheUpdate;
+import com.mirson.gemini.cache.annotation.CacheAdd;
 import com.mirson.gemini.cache.example.service.IOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ public class OrderServiceImpl implements IOrderService {
      * @param orderNo
      * @return
      */
-    @Cacheable(cacheName = "gemini_cache_order", keyExpression = "#param1", TTL = 10)
+    @CacheAdd(cacheName = "gemini_cache_order", keyExpression = "#param1", TTL = 10)
     @Override
     public String getOrder(String orderNo){
         log.info("enter getOrder method, orderNo: " + orderNo);
@@ -34,7 +34,7 @@ public class OrderServiceImpl implements IOrderService {
      * @param orderNo
      * @return
      */
-    @CachePut(cacheNames = "gemini_cache_order", keyExpression = "#param1", TTL = 10)
+    @CacheUpdate(cacheNames = "gemini_cache_order", keyExpression = "#param1", TTL = 10)
     @Override
     public String updateOrder(String orderNo){
         log.info("enter updateOrder method, orderNo: " + orderNo);

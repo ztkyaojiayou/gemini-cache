@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.core.annotation.Order;
@@ -34,12 +35,14 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 缓存自动配置类
+ *
  * @author zoutongkun
  */
 @Configuration
 @EnableAspectJAutoProxy
 @ConditionalOnProperty(name = "app.cache.enable", havingValue = "true")
 @Order(10)
+@ComponentScan(basePackages = "com.mirson.gemini.cache")
 public class CacheAutoConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(CacheAutoConfiguration.class);

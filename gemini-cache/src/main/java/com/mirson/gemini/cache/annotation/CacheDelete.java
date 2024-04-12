@@ -10,6 +10,7 @@ import static com.mirson.gemini.cache.utils.KeyGenerators.SHA;
 
 /**
  * 缓存删除
+ * @author zoutongkun
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

@@ -12,29 +12,30 @@ import static com.mirson.gemini.cache.utils.KeyGenerators.SHA;
 
 
 /**
- * 缓存更新
+ * 新增缓存
+ * @author zoutongkun
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CachePut {
+public @interface CacheAdd {
 
     /**
      * 缓存名称
      * @return
      */
-    String[] cacheNames() default {};
+    String cacheName() default "";
 
     /**
-     * 缓存生命周期(单位：秒）
+     * 缓存生命周期 (单位：秒）
      * @return
      */
     long TTL() default 0;
 
     /**
-     * 缓存key（唯一性）
+     * 缓存KEY(唯一性）
      * @return
      */
-    String keyExpression();
+    String keyExpression() default "";
 
     /**
      * 是否异步
@@ -43,7 +44,7 @@ public @interface CachePut {
     boolean isAsync() default false;
 
     /**
-     * 缓存KEY生成器
+     * key生成器
      * @return
      */
     KeyGenerators keyGenerator() default SHA;

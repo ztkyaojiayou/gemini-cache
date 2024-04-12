@@ -1,0 +1,3 @@
+# ??spi????bean
+com.mirson.gemini.cache.config=\
+com.mirson.gemini.cache.config.CacheAutoConfiguration
