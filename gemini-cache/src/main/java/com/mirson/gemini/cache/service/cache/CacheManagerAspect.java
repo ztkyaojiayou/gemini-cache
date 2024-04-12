@@ -1,13 +1,12 @@
-package com.mirson.gemini.cache.service;
+package com.mirson.gemini.cache.service.cache;
 
 import com.mirson.gemini.cache.annotation.CacheDelete;
 import com.mirson.gemini.cache.annotation.CachePut;
 import com.mirson.gemini.cache.annotation.Cacheable;
 import com.mirson.gemini.cache.config.CacheConfigProperties;
-import com.mirson.gemini.cache.service.cache.CacheService;
 import com.mirson.gemini.cache.utils.CacheUtil;
 import com.mirson.gemini.cache.utils.KeyGenerators;
-import com.mirson.gemini.cache.utils.SpringExpressionParserUtil;
+import com.mirson.gemini.cache.utils.SpElUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -26,7 +25,10 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
 /**
- * AOP切面，缓存拦截处理
+ * 二级缓存AOP切面
+ * 整合二级缓存逻辑，非常简单！
+ *
+ * @author zoutongkun
  */
 @Aspect
 @Order(101)
@@ -36,7 +38,7 @@ import java.lang.reflect.Method;
 public class CacheManagerAspect {
 
     @Autowired
-    SpringExpressionParserUtil springExpressionParserUtil;
+    SpElUtil spElUtil;
 
     @Autowired
     CacheService redisCacheService;
@@ -68,7 +70,7 @@ public class CacheManagerAspect {
                 return;
             }
             CachePut cachePutAnnotation = getAnnotation(joinPoint, CachePut.class);
-            Object cacheKey = springExpressionParserUtil
+            Object cacheKey = spElUtil
                     .parseAndGetCacheKeyFromExpression(cachePutAnnotation.keyExpression(), returnObject,
                             joinPoint.getArgs(), cachePutAnnotation.keyGenerator());
 
@@ -95,7 +97,7 @@ public class CacheManagerAspect {
             String[] cacheNames = cacheDeleteAnnotation.cacheNames();
             Object cacheKey = null;
             if (!cacheDeleteAnnotation.removeAll()) {
-                cacheKey = springExpressionParserUtil
+                cacheKey = spElUtil
                         .parseAndGetCacheKeyFromExpression(cacheDeleteAnnotation.keyExpression(), returnObject,
                                 joinPoint.getArgs(), cacheDeleteAnnotation.keyGenerator());
             }
@@ -130,11 +132,11 @@ public class CacheManagerAspect {
             if (StringUtils.isEmpty(cacheableAnnotation.keyExpression())) {
                 cacheKey = CacheUtil.buildCacheKey(proceedingJoinPoint.getArgs());
             } else {
-                cacheKey = springExpressionParserUtil
+                cacheKey = spElUtil
                         .parseAndGetCacheKeyFromExpression(cacheableAnnotation.keyExpression(), null,
                                 proceedingJoinPoint.getArgs(), keyGenerator);
             }
-
+            //从缓存中获取数据
             returnObject = redisCacheService.getFromCache(cacheableAnnotation.cacheName(), cacheKey);
 
         } catch (Exception e) {
@@ -147,6 +149,7 @@ public class CacheManagerAspect {
 
             if (returnObject != null) {
                 try {
+                    assert cacheableAnnotation != null;
                     if (cacheableAnnotation.isAsync()) {
                         redisCacheService
                                 .saveInRedisAsync(new String[]{cacheableAnnotation.cacheName()}, cacheKey,
@@ -165,6 +168,13 @@ public class CacheManagerAspect {
         return returnObject;
     }
 
+    /**
+     * 执行目标方法，相当于是从数据库取
+     *
+     * @param proceedingJoinPoint
+     * @return
+     * @throws Throwable
+     */
     private Object callActualMethod(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
 
         return proceedingJoinPoint.proceed();

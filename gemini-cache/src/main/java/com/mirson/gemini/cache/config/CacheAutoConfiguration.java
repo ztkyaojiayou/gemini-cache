@@ -1,6 +1,10 @@
 package com.mirson.gemini.cache.config;
 
-import com.mirson.gemini.cache.service.cache.*;
+import com.mirson.gemini.cache.service.cache.CacheService;
+import com.mirson.gemini.cache.service.cache.first.CaffeineCacheServiceImpl;
+import com.mirson.gemini.cache.service.cache.notify.RedisSendService;
+import com.mirson.gemini.cache.service.cache.notify.RedisSendServiceImpl;
+import com.mirson.gemini.cache.service.cache.second.RedisCacheServiceImpl;
 import com.mirson.gemini.cache.service.listener.CacheMessageListener;
 import com.mirson.gemini.cache.utils.SpringUtils;
 import org.redisson.Redisson;
@@ -29,15 +33,16 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- *  缓存配置
+ * 缓存自动配置类
+ * @author zoutongkun
  */
 @Configuration
 @EnableAspectJAutoProxy
 @ConditionalOnProperty(name = "app.cache.enable", havingValue = "true")
 @Order(10)
-public class CacheConfiguration {
+public class CacheAutoConfiguration {
 
-    private static final Logger logger = LoggerFactory.getLogger(CacheConfiguration.class);
+    private static final Logger logger = LoggerFactory.getLogger(CacheAutoConfiguration.class);
 
     /**
      * 缓存参数配置
@@ -52,6 +57,7 @@ public class CacheConfiguration {
 
     /**
      * 线程池配置
+     *
      * @return
      */
     @Bean
@@ -70,10 +76,10 @@ public class CacheConfiguration {
      * 增加关闭钩子处理， 实现Redisson线程池优雅关闭
      */
     @PostConstruct
-    public void addShutdown(){
+    public void addShutdown() {
         Object redisExecutorObj = SpringUtils.getBean("redisExecutor");
-        if(null != redisExecutorObj) {
-            ExecutorService redisExecutor = (ExecutorService)redisExecutorObj;
+        if (null != redisExecutorObj) {
+            ExecutorService redisExecutor = (ExecutorService) redisExecutorObj;
             // 关闭钩子处理
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
@@ -93,10 +99,10 @@ public class CacheConfiguration {
     }
 
     @Bean
-    public RedissonClient redissonClient(ExecutorService redisExecutor){
+    public RedissonClient redissonClient(ExecutorService redisExecutor) {
         Config config = new Config();
         RedissonClient redisson = null;
-        if(null != cacheConfigProperties.getHost()) {
+        if (null != cacheConfigProperties.getHost()) {
             // 单机连接方式
             SingleServerConfig serverConfig = config.useSingleServer().setAddress("redis://" + cacheConfigProperties.getHost() + ":" + cacheConfigProperties.getPort());
             serverConfig.setDatabase(cacheConfigProperties.getDatabase());
@@ -106,8 +112,8 @@ public class CacheConfiguration {
             serverConfig.setConnectTimeout(cacheConfigProperties.getTimeout());
             serverConfig.setTimeout(cacheConfigProperties.getTimeout());
             redisson = Redisson.create(config);
-        }else {
-            if(null == cacheConfigProperties.getClusterNodes()) {
+        } else {
+            if (null == cacheConfigProperties.getClusterNodes()) {
                 throw new RuntimeException("You need to config the clusterNodes property!");
             }
             // 集群连接方式
@@ -119,15 +125,15 @@ public class CacheConfiguration {
             serversConfig.setMasterConnectionMinimumIdleSize(cacheConfigProperties.getMinIdleSize());
             serversConfig.setSlaveConnectionMinimumIdleSize(cacheConfigProperties.getMinIdleSize());
 
-            Arrays.stream(cacheConfigProperties.getClusterNodes().split(",")).forEach(host->serversConfig.addNodeAddress("redis://"+ host.trim()));
+            Arrays.stream(cacheConfigProperties.getClusterNodes().split(",")).forEach(host -> serversConfig.addNodeAddress("redis://" + host.trim()));
             serversConfig.setPassword(cacheConfigProperties.getPassword());
             redisson = Redisson.create(config);
         }
         redisson.getConfig().setExecutor(redisExecutor);
-        if(cacheConfigProperties.isUseCompression()) {
+        if (cacheConfigProperties.isUseCompression()) {
             // 开启压缩, 采用LZ4压缩
             redisson.getConfig().setCodec(new LZ4Codec());
-        }else {
+        } else {
             // 高速序列化编码
             redisson.getConfig().setCodec(new FstCodec());
 
@@ -136,10 +142,9 @@ public class CacheConfiguration {
     }
 
 
-
-
     /**
      * Redis缓存更新消息发送接口
+     *
      * @param cacheConfigProperties
      * @param redissonClient
      * @return
@@ -153,6 +158,7 @@ public class CacheConfiguration {
 
     /**
      * 缓存服务实现接口
+     *
      * @return
      */
     @Bean
@@ -161,10 +167,10 @@ public class CacheConfiguration {
                                      ExecutorService redisExecutor) {
         CacheService cacheService = null;
         // 判断是否开启二级缓存
-        if(cacheConfigProperties.isEnableSecondCache()) {
+        if (cacheConfigProperties.isEnableSecondCache()) {
             CacheService redisCacheService = new RedisCacheServiceImpl(redissonClient, redisExecutor, cacheConfigProperties);
             cacheService = new CaffeineCacheServiceImpl(redisCacheService, redisSendService, cacheConfigProperties);
-        }else {
+        } else {
             cacheService = new RedisCacheServiceImpl(redissonClient, redisExecutor, cacheConfigProperties);
         }
         return cacheService;
@@ -173,6 +179,7 @@ public class CacheConfiguration {
 
     /**
      * 设置消息监听器
+     *
      * @param redissonClient
      * @param caffeineCacheService
      * @return
@@ -183,7 +190,7 @@ public class CacheConfiguration {
     @Bean
     public RTopic subscribe(RedissonClient redissonClient, CacheService caffeineCacheService) {
         RTopic rTopic = redissonClient.getTopic(cacheConfigProperties.getTopic());
-        CacheMessageListener messageListener = new CacheMessageListener((CaffeineCacheServiceImpl)caffeineCacheService);
+        CacheMessageListener messageListener = new CacheMessageListener((CaffeineCacheServiceImpl) caffeineCacheService);
         rTopic.addListener(messageListener);
         return rTopic;
     }

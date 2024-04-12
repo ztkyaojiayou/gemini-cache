@@ -11,9 +11,10 @@ import java.util.List;
 
 /**
  * Spring EL 表达式处理工具
+ * @author zoutongkun
  */
 @Component
-public class SpringExpressionParserUtil {
+public class SpElUtil {
 
   protected static class RootObject {
 
@@ -71,7 +72,7 @@ public class SpringExpressionParserUtil {
     inputString = inputString.trim();
     String[] inputStringArr = inputString.split("\\.");
     String indexNumberStr = inputStringArr[0].replace("#param", "");
-    int indexNumber = Integer.valueOf(indexNumberStr);
+    int indexNumber = Integer.parseInt(indexNumberStr);
     indexNumber--;
     if (inputStringArr.length > 1)
       return "args[" + indexNumber + "]" + "." + inputStringArr[1];

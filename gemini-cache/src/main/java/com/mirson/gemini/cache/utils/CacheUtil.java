@@ -48,7 +48,7 @@ public final class CacheUtil {
     StringBuilder key = new StringBuilder(":");
     for (Object obj : args) {
       if (obj != null) {
-        key.append(obj.toString()).append(":");
+        key.append(obj).append(":");
       }
     }
     return DigestUtils.sha1Hex(key.toString()).hashCode();

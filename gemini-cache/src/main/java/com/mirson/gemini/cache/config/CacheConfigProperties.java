@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * 
+ * 缓存相关的配置参数
  *
  * @author mirson
  * @date 2021/9/26
@@ -42,7 +42,7 @@ public class CacheConfigProperties {
     private int executorMaxSize;
 
     /**
-     *  核心连接数（默认为8）
+     * 核心连接数（默认为8）
      */
     @Value("${app.cache.redis.executor.corePoolSize: 8}")
     private int executorCoreSize;
@@ -79,7 +79,7 @@ public class CacheConfigProperties {
 
 
     /**
-     *  Redis主机连接信息
+     * Redis主机连接信息
      */
     @Value("${app.cache.redis.host:#{null}}")
     private String host;
@@ -90,7 +90,7 @@ public class CacheConfigProperties {
     @Value("${app.cache.redis.global.expire: 24*3600 }")
     private long expire;
     /**
-     *  Redis 集群连接信息
+     * Redis 集群连接信息
      */
     @Value("${app.cache.redis.clusterNodes:#{null}}")
     private String clusterNodes;

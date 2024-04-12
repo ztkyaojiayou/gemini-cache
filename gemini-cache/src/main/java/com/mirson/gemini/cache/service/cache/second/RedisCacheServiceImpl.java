@@ -1,6 +1,7 @@
-package com.mirson.gemini.cache.service.cache;
+package com.mirson.gemini.cache.service.cache.second;
 
 import com.mirson.gemini.cache.config.CacheConfigProperties;
+import com.mirson.gemini.cache.service.cache.CacheService;
 import org.redisson.api.RBatch;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RMapCacheAsync;
@@ -13,7 +14,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * 二级缓存实现，也就redis
  * Redis缓存服务管理实现类
+ *
+ * @author zoutongkun
  */
 public class RedisCacheServiceImpl implements CacheService {
 
@@ -39,6 +43,7 @@ public class RedisCacheServiceImpl implements CacheService {
 
     /**
      * 获取缓存对象
+     *
      * @param cacheName
      * @param cacheKey
      * @return
@@ -54,6 +59,7 @@ public class RedisCacheServiceImpl implements CacheService {
 
     /**
      * 保存至REDIS缓存
+     *
      * @param cacheNames
      * @param cacheKey
      * @param cacheValue
@@ -69,13 +75,13 @@ public class RedisCacheServiceImpl implements CacheService {
                     "Cache names list can not be null or empty for save operation!!");
         }
 
-        for(String cacheName : cacheNames) {
+        for (String cacheName : cacheNames) {
             RMapCache mapCache = redissonClient.getMapCache(cacheName);
             boolean isExists = mapCache.isExists();
-            if(!isExists) {
+            if (!isExists) {
                 // 第一次保存， 并设定超时时间
                 firstSave(cacheName, cacheKey, cacheValue, ttl);
-            }else {
+            } else {
                 mapCache.put(cacheKey, cacheValue, ttl, TimeUnit.SECONDS);
             }
         }
@@ -93,6 +99,7 @@ public class RedisCacheServiceImpl implements CacheService {
 
     /**
      * 清理缓存
+     *
      * @param cacheNames
      * @param cacheKey
      * @return
@@ -118,6 +125,7 @@ public class RedisCacheServiceImpl implements CacheService {
 
     /**
      * 清理缓存
+     *
      * @param cacheNames
      * @return
      */
@@ -144,7 +152,8 @@ public class RedisCacheServiceImpl implements CacheService {
     }
 
     /**
-     *  清除缓存信息（异步方式）
+     * 清除缓存信息（异步方式）
+     *
      * @param cacheNames
      * @param cacheKey
      * @return
@@ -164,6 +173,7 @@ public class RedisCacheServiceImpl implements CacheService {
 
     /**
      * 异步方式清理缓存
+     *
      * @param cacheNames
      * @return
      */

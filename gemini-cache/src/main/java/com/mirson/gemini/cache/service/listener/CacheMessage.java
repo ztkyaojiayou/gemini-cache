@@ -7,6 +7,7 @@ import java.io.Serializable;
 
 /**
  * 缓存发布/订阅传输消息对象
+ * @author zoutongkun
  */
 @Data
 public class CacheMessage implements Serializable {

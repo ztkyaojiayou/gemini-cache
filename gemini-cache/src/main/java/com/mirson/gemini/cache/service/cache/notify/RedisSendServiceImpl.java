@@ -1,4 +1,4 @@
-package com.mirson.gemini.cache.service.cache;
+package com.mirson.gemini.cache.service.cache.notify;
 
 import com.mirson.gemini.cache.config.CacheConfigProperties;
 import com.mirson.gemini.cache.service.listener.CacheMessage;

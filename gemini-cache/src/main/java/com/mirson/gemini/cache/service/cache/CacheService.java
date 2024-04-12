@@ -2,6 +2,9 @@ package com.mirson.gemini.cache.service.cache;
 
 /**
  * 缓存服务接口
+ * 分为一级/本地换存和二级缓存
+ *
+ * @author zoutongkun
  */
 public interface CacheService {
 

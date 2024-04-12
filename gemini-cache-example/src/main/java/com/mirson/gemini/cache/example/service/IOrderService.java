@@ -11,12 +11,12 @@ public interface IOrderService {
      * @param orderNo
      * @return
      */
-    public String getOrder(String orderNo);
+    String getOrder(String orderNo);
 
     /**
      * 更新订单
      * @param orderNo
      * @return
      */
-    public String updateOrder(String orderNo);
+    String updateOrder(String orderNo);
 }

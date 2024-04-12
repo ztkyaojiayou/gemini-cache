@@ -14,12 +14,14 @@ import java.util.zip.GZIPOutputStream;
 
 /**
  * Gzip压缩
+ * @author zoutongkun
  */
 public class GenericGZIPRedisSerializer
         implements RedisSerializer<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(GenericGZIPRedisSerializer.class);
 
+    @Override
     public byte[] serialize(Object object) {
         ByteArrayOutputStream baos;
         GZIPOutputStream gzipOut;
@@ -42,6 +44,7 @@ public class GenericGZIPRedisSerializer
         }
     }
 
+    @Override
     public Object deserialize(byte[] bytes) {
         try {
             if(null != bytes) {

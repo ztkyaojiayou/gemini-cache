@@ -1,4 +1,4 @@
-package com.mirson.gemini.cache.service.cache;
+package com.mirson.gemini.cache.service.cache.notify;
  /**
  * 
  *

@@ -1,8 +1,10 @@
-package com.mirson.gemini.cache.service.cache;
+package com.mirson.gemini.cache.service.cache.first;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.mirson.gemini.cache.config.CacheConfigProperties;
+import com.mirson.gemini.cache.service.cache.CacheService;
+import com.mirson.gemini.cache.service.cache.notify.RedisSendService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,22 +13,23 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 
+ * 一级/本地缓存实现，这里使用的是Caffeine
  *
  * @author mirson
  * @date 2021/9/26
  */
-public class CaffeineCacheServiceImpl extends SecondCacheService {
+public class CaffeineCacheServiceImpl extends AbstractFirstCacheService {
 
     private static final Logger logger = LoggerFactory.getLogger(CaffeineCacheServiceImpl.class);
 
     /**
-     *  Caffeine内部缓存
+     * Caffeine内部缓存
      */
-    private ConcurrentMap<String, Cache> cacheMap = new ConcurrentHashMap<String, Cache>();
+    private ConcurrentMap<String, Cache> cacheMap = new ConcurrentHashMap<>();
 
     /**
      * Redis 发送服务接口
+     * 用于保持缓存的一致性
      */
     private RedisSendService redisSendService;
 
@@ -45,10 +48,11 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
 
     /**
      * 清理缓存（支持批量清理）
+     *
      * @param cacheNames
      */
     private void clearAndSend(String[] cacheNames) {
-        for(String cacheName : cacheNames) {
+        for (String cacheName : cacheNames) {
             clearAndSend(cacheName, null, false);
         }
         // 发送Redis缓存更新消息
@@ -57,11 +61,12 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
 
     /**
      * 清理缓存（支持批量清理）
+     *
      * @param cacheNames
      * @param key
      */
     private void clearAndSend(String[] cacheNames, Object key) {
-        for(String cacheName : cacheNames) {
+        for (String cacheName : cacheNames) {
             clearAndSend(cacheName, key, false);
         }
         // 发送Redis缓存更新消息
@@ -71,12 +76,13 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
 
     /**
      * 保存并且发送缓存（支持批量清理）
+     *
      * @param cacheNames
      * @param key
      */
     private void saveAndSend(String[] cacheNames, Object key, Object cacheValue) {
-        for(String cacheName : cacheNames) {
-            saveAndSend(cacheName, key, cacheValue,false);
+        for (String cacheName : cacheNames) {
+            saveAndSend(cacheName, key, cacheValue, false);
         }
         // 发送Redis缓存更新消息, 所有cacheNames统一发送
         redisSendService.sendMessage(cacheNames, key);
@@ -85,11 +91,12 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
 
     /**
      * 清理缓存（支持批量清理）
+     *
      * @param cacheNames
      * @param key
      */
     public void clearNotSend(String[] cacheNames, Object key) {
-        for(String cacheName : cacheNames) {
+        for (String cacheName : cacheNames) {
             clearAndSend(cacheName, key, false);
         }
     }
@@ -97,6 +104,7 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
 
     /**
      * 保存本地缓存
+     *
      * @param cacheName
      * @param key
      */
@@ -109,7 +117,7 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
         }
         caffeineCache.put(key, value);
 
-        if(isNeedSend) {
+        if (isNeedSend) {
             // 发送Redis缓存更新消息
             redisSendService.sendMessage(cacheName, key);
         }
@@ -118,6 +126,7 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
 
     /**
      * 初始化caffeine缓存对象
+     *
      * @return
      */
     public Cache<Object, Object> caffeineCache() {
@@ -143,6 +152,7 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
 
     /**
      * 清除本地缓存
+     *
      * @param cacheName
      * @param key
      */
@@ -156,13 +166,12 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
         if (key == null) {
             // key键值为空， 则清空该缓存下面的所有条目
             caffeineCache.invalidateAll();
-        }
-        else {
+        } else {
             // 清除指定键值的缓存
             caffeineCache.invalidate(key);
         }
 
-        if(isNeedSend) {
+        if (isNeedSend) {
             // 发送Redis缓存更新消息
             redisSendService.sendMessage(cacheName, key);
         }
@@ -170,6 +179,7 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
 
     /**
      * 获取缓存对象
+     *
      * @param cacheName
      * @param cacheKey
      * @return
@@ -178,16 +188,16 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
     public Object getFromCache(final String cacheName, final Object cacheKey) {
         Object result = null;
         Cache caffeineCache = cacheMap.get(cacheName);
-        if(null != caffeineCache) {
-            // 先从本地缓存获取
+        if (null != caffeineCache) {
+            // 1.先从本地缓存获取
             result = caffeineCache.getIfPresent(cacheKey);
         }
 
-        if(null == result ) {
-            // 从Redis缓存获取
+        if (null == result) {
+            // 2.从Redis缓存获取
             result = cacheService.getFromCache(cacheName, cacheKey);
             logger.info("getFromCache # fetch data from redis cache.");
-            // 保存更新Caffeine缓存
+            // 3.再保存更新Caffeine缓存
             saveCaffeineCache(cacheName, cacheKey, result, caffeineCache);
         }
 
@@ -196,13 +206,14 @@ public class CaffeineCacheServiceImpl extends SecondCacheService {
 
     /**
      * 保存更新Caffeine缓存
+     *
      * @param cacheName
      * @param cacheKey
      * @param result
      * @param caffeineCache
      */
     private void saveCaffeineCache(String cacheName, Object cacheKey, Object result, Cache caffeineCache) {
-        if(null !=  result) {
+        if (null != result) {
             // 获取缓存对象
             if (caffeineCache == null) {
                 caffeineCache = caffeineCache();
