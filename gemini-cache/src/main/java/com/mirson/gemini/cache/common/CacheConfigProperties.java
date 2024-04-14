@@ -30,7 +30,8 @@ public class CacheConfigProperties {
     private boolean enableCache;
 
     /**
-     * 是否开启二级缓存
+     * 是否开启两级缓存
+     * 否则只开启redis缓存--二级缓存
      */
     @Value("${app.cache.enableSecondCache: false}")
     private boolean enableSecondCache;
@@ -120,7 +121,7 @@ public class CacheConfigProperties {
     private boolean useCompression;
 
     /**
-     * 分布式缓存更新的的topic名称
+     * 分布式缓存更新时的topic名称
      */
     @Value("${app.cache.caffeine.topic: cache:redis:caffeine:topic}")
     private String topic;

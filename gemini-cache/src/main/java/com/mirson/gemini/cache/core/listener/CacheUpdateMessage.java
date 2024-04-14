@@ -7,34 +7,33 @@ import java.io.Serializable;
 
 /**
  * 缓存发布/订阅传输消息对象
+ *
  * @author zoutongkun
  */
 @Data
-public class CacheMessage implements Serializable {
+public class CacheUpdateMessage implements Serializable {
     /**
      * 系统唯一标识
+     * 用于区分是否为当前节点的本地缓存数据
      */
     private String systemId = CacheConfigProperties.SYSTEM_ID;
 
     /**
      * 缓存名称
      */
-	private String[] cacheNames;
+    private String[] cacheNames;
 
     /**
      * 缓存KEY键值
      */
-	private Object key;
+    private Object key;
 
-	public CacheMessage() {
+    public CacheUpdateMessage(String[] cacheName, Object key) {
+        this.cacheNames = cacheName;
+        this.key = key;
     }
 
-    public CacheMessage(String[] cacheName, Object key) {
-	    this.cacheNames = cacheName;
-	    this.key = key;
-    }
-
-    public CacheMessage(String cacheName, Object key) {
+    public CacheUpdateMessage(String cacheName, Object key) {
         this.cacheNames = new String[]{cacheName};
         this.key = key;
     }

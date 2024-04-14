@@ -1,7 +1,7 @@
 package com.mirson.gemini.cache.core.notify;
 
 import com.mirson.gemini.cache.common.CacheConfigProperties;
-import com.mirson.gemini.cache.core.listener.CacheMessage;
+import com.mirson.gemini.cache.core.listener.CacheUpdateMessage;
 import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
@@ -73,7 +73,7 @@ public class NotifyByRedisImpl implements NotifyService {
     @Override
     public void sendMessage(String[] cacheNames, Object key) {
         RTopic rTopic = redissonClient.getTopic(cacheConfigProperties.getTopic());
-        long receive = rTopic.publish(new CacheMessage(cacheNames, key));
+        long receive = rTopic.publish(new CacheUpdateMessage(cacheNames, key));
         logger.info("sendMessage receive clients: " + receive);
     }
 

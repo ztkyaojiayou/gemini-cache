@@ -1,8 +1,8 @@
 package com.mirson.gemini.cache.core.aspect;
 
+import com.mirson.gemini.cache.annotation.CacheAdd;
 import com.mirson.gemini.cache.annotation.CacheDelete;
 import com.mirson.gemini.cache.annotation.CacheUpdate;
-import com.mirson.gemini.cache.annotation.CacheAdd;
 import com.mirson.gemini.cache.common.CacheConfigProperties;
 import com.mirson.gemini.cache.core.cache.CacheService;
 import com.mirson.gemini.cache.utils.CacheUtil;
@@ -42,25 +42,34 @@ public class CacheManagerAspect {
     SpElUtil spElUtil;
 
     @Autowired
-    CacheService redisCacheService;
+    CacheService cacheService;
 
     @Autowired
     private CacheConfigProperties cacheConfigProperties;
 
+    /**
+     * 获取数据时
+     */
     @Pointcut("execution(* com.mirson..*.*(..)) && @annotation(com.mirson.gemini.cache.annotation.CacheAdd)")
-    public void executionOfCacheableMethod() {
+    public void executionOfCacheAddMethod() {
     }
 
+    /**
+     * 更新数据时
+     */
     @Pointcut("execution(* com.mirson..*.*(..)) && @annotation(com.mirson.gemini.cache.annotation.CacheUpdate)")
-    public void executionOfCachePutMethod() {
+    public void executionOfCacheUpdateMethod() {
     }
 
+    /**
+     * 删除数据时
+     */
     @Pointcut("execution(* com.mirson..*.*(..))  && @annotation(com.mirson.gemini.cache.annotation.CacheDelete)")
     public void executionOfCacheDeleteMethod() {
     }
 
-    @AfterReturning(pointcut = "executionOfCachePutMethod()", returning = "returnObject")
-    public void putInCache(final JoinPoint joinPoint, final Object returnObject) {
+    @AfterReturning(pointcut = "executionOfCacheUpdateMethod()", returning = "returnObject")
+    public void UpdateCache(final JoinPoint joinPoint, final Object returnObject) {
 
         try {
             if (returnObject == null) {
@@ -76,9 +85,9 @@ public class CacheManagerAspect {
                             joinPoint.getArgs(), cacheUpdateAnnotation.keyGenerator());
 
             if (cacheUpdateAnnotation.isAsync()) {
-                redisCacheService.saveInRedisAsync(cacheUpdateAnnotation.cacheNames(), cacheKey, returnObject, cacheUpdateAnnotation.TTL());
+                cacheService.saveByAsync(cacheUpdateAnnotation.cacheNames(), cacheKey, returnObject, cacheUpdateAnnotation.TTL());
             } else {
-                redisCacheService.save(cacheUpdateAnnotation.cacheNames(), cacheKey, returnObject, cacheUpdateAnnotation.TTL());
+                cacheService.save(cacheUpdateAnnotation.cacheNames(), cacheKey, returnObject, cacheUpdateAnnotation.TTL());
             }
 
         } catch (Exception e) {
@@ -103,10 +112,11 @@ public class CacheManagerAspect {
                                 joinPoint.getArgs(), cacheDeleteAnnotation.keyGenerator());
             }
             if (cacheDeleteAnnotation.isAsync()) {
-                if (cacheDeleteAnnotation.removeAll())
-                    redisCacheService.invalidateCache(cacheNames);
+                if (cacheDeleteAnnotation.removeAll()) {
+                    cacheService.delete(cacheNames);
+                }
             } else {
-                redisCacheService.invalidateCache(cacheNames, cacheKey);
+                cacheService.delete(cacheNames, cacheKey);
             }
 
         } catch (Exception e) {
@@ -114,9 +124,9 @@ public class CacheManagerAspect {
         }
     }
 
-    @Around("executionOfCacheableMethod()")
-    public Object getAndSaveInCache(final ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
-
+    @Around("executionOfCacheAddMethod()")
+    public Object getAndAddCache(final ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
+        //未开启缓存时，直接执行原方法
         if (!cacheConfigProperties.isEnableCache()) {
             return callActualMethod(proceedingJoinPoint);
         }
@@ -127,10 +137,9 @@ public class CacheManagerAspect {
         Object cacheKey = null;
         try {
             cacheAddAnnotation = getAnnotation(proceedingJoinPoint, CacheAdd.class);
-
             KeyGenerators keyGenerator = cacheAddAnnotation.keyGenerator();
-
             if (StringUtils.isEmpty(cacheAddAnnotation.keyExpression())) {
+                //构建缓存key
                 cacheKey = CacheUtil.buildCacheKey(proceedingJoinPoint.getArgs());
             } else {
                 cacheKey = spElUtil
@@ -138,25 +147,29 @@ public class CacheManagerAspect {
                                 proceedingJoinPoint.getArgs(), keyGenerator);
             }
             //从缓存中获取数据
-            returnObject = redisCacheService.getFromCache(cacheAddAnnotation.cacheName(), cacheKey);
+            //包括两级缓存
+            returnObject = cacheService.get(cacheAddAnnotation.cacheName(), cacheKey);
 
         } catch (Exception e) {
             log.error("getAndSaveInCache # Redis op Exception while trying to get from cache ## " + e.getMessage(), e);
         }
+        //若缓存中有，则直接返回
         if (returnObject != null) {
             return returnObject;
         } else {
+            //否则，调用原方法，一般就是从数据库中获取！
             returnObject = callActualMethod(proceedingJoinPoint);
-
+            //再写回到缓存（先写redis，再写本地缓存！）
             if (returnObject != null) {
                 try {
                     assert cacheAddAnnotation != null;
+                    //是否异步写入
                     if (cacheAddAnnotation.isAsync()) {
-                        redisCacheService
-                                .saveInRedisAsync(new String[]{cacheAddAnnotation.cacheName()}, cacheKey,
+                        cacheService
+                                .saveByAsync(new String[]{cacheAddAnnotation.cacheName()}, cacheKey,
                                         returnObject, cacheAddAnnotation.TTL());
                     } else {
-                        redisCacheService
+                        cacheService
                                 .save(new String[]{cacheAddAnnotation.cacheName()}, cacheKey,
                                         returnObject, cacheAddAnnotation.TTL());
                     }
@@ -170,14 +183,13 @@ public class CacheManagerAspect {
     }
 
     /**
-     * 执行目标方法，相当于是从数据库取
+     * 执行目标方法，相当于是直接从数据库取
      *
      * @param proceedingJoinPoint
      * @return
      * @throws Throwable
      */
     private Object callActualMethod(ProceedingJoinPoint proceedingJoinPoint) throws Throwable {
-
         return proceedingJoinPoint.proceed();
 
     }

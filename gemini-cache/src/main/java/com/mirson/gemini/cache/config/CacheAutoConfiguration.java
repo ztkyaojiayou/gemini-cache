@@ -3,11 +3,11 @@ package com.mirson.gemini.cache.config;
 import com.mirson.gemini.cache.common.CacheConfigProperties;
 import com.mirson.gemini.cache.common.NamedThreadFactory;
 import com.mirson.gemini.cache.core.cache.CacheService;
-import com.mirson.gemini.cache.core.cache.first.CaffeineCacheServiceImpl;
-import com.mirson.gemini.cache.core.notify.NotifyService;
+import com.mirson.gemini.cache.core.cache.TwoLevelCacheService;
+import com.mirson.gemini.cache.core.cache.OneLevelCacheService;
+import com.mirson.gemini.cache.core.listener.CacheUpdateMessageListener;
 import com.mirson.gemini.cache.core.notify.NotifyByRedisImpl;
-import com.mirson.gemini.cache.core.cache.second.RedisCacheServiceImpl;
-import com.mirson.gemini.cache.core.listener.CacheMessageListener;
+import com.mirson.gemini.cache.core.notify.NotifyService;
 import com.mirson.gemini.cache.utils.SpringUtils;
 import org.redisson.Redisson;
 import org.redisson.api.RTopic;
@@ -86,20 +86,18 @@ public class CacheAutoConfiguration {
         if (null != redisExecutorObj) {
             ExecutorService redisExecutor = (ExecutorService) redisExecutorObj;
             // 关闭钩子处理
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    redisExecutor.shutdown();
-                    try {
-                        if (!redisExecutor.awaitTermination(awaitTerminationSeconds, TimeUnit.SECONDS)) {
-                            logger.info("Redisson Pool Executor did not terminate in the specified time.");
-                            List<Runnable> droppedTasks = redisExecutor.shutdownNow();
-                            logger.info("Redisson Pool Executor was abruptly shutdown. " + droppedTasks.size() + " tasks will not be executed."); //optional **
-                        }
-                    } catch (InterruptedException e) {
-                        logger.error("Redisson Pool Executor shutdown Error: " + e.getMessage(), e);
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                redisExecutor.shutdown();
+                try {
+                    if (!redisExecutor.awaitTermination(awaitTerminationSeconds, TimeUnit.SECONDS)) {
+                        logger.info("Redisson Pool Executor did not terminate in the specified time.");
+                        List<Runnable> droppedTasks = redisExecutor.shutdownNow();
+                        logger.info("Redisson Pool Executor was abruptly shutdown. " + droppedTasks.size() + " tasks will not be executed."); //optional **
                     }
+                } catch (InterruptedException e) {
+                    logger.error("Redisson Pool Executor shutdown Error: " + e.getMessage(), e);
                 }
-            });
+            }));
         }
     }
 
@@ -157,8 +155,7 @@ public class CacheAutoConfiguration {
     @Bean
     public NotifyService redisSendService(CacheConfigProperties cacheConfigProperties,
                                           RedissonClient redissonClient) {
-        NotifyService notifyService = new NotifyByRedisImpl(cacheConfigProperties, redissonClient);
-        return notifyService;
+        return new NotifyByRedisImpl(cacheConfigProperties, redissonClient);
     }
 
     /**
@@ -170,20 +167,21 @@ public class CacheAutoConfiguration {
     public CacheService cacheService(RedissonClient redissonClient,
                                      NotifyService notifyService,
                                      ExecutorService redisExecutor) {
-        CacheService cacheService = null;
-        // 判断是否开启二级缓存
+        CacheService cacheService;
+        // 判断是否开启两级缓存，默认只开启redis缓存
         if (cacheConfigProperties.isEnableSecondCache()) {
-            CacheService redisCacheService = new RedisCacheServiceImpl(redissonClient, redisExecutor, cacheConfigProperties);
-            cacheService = new CaffeineCacheServiceImpl(redisCacheService, notifyService, cacheConfigProperties);
+            CacheService secondCacheService = new OneLevelCacheService(redissonClient, redisExecutor, cacheConfigProperties);
+            cacheService = new TwoLevelCacheService(secondCacheService, notifyService, cacheConfigProperties);
         } else {
-            cacheService = new RedisCacheServiceImpl(redissonClient, redisExecutor, cacheConfigProperties);
+            cacheService = new OneLevelCacheService(redissonClient, redisExecutor, cacheConfigProperties);
         }
         return cacheService;
     }
 
 
     /**
-     * 设置消息监听器
+     * 设置redis消息监听器
+     * 只有在开启了两级缓存时才注入！！！
      *
      * @param redissonClient
      * @param caffeineCacheService
@@ -195,7 +193,7 @@ public class CacheAutoConfiguration {
     @Bean
     public RTopic subscribe(RedissonClient redissonClient, CacheService caffeineCacheService) {
         RTopic rTopic = redissonClient.getTopic(cacheConfigProperties.getTopic());
-        CacheMessageListener messageListener = new CacheMessageListener((CaffeineCacheServiceImpl) caffeineCacheService);
+        CacheUpdateMessageListener messageListener = new CacheUpdateMessageListener((TwoLevelCacheService) caffeineCacheService);
         rTopic.addListener(messageListener);
         return rTopic;
     }

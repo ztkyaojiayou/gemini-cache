@@ -1,7 +1,6 @@
-package com.mirson.gemini.cache.core.cache.second;
+package com.mirson.gemini.cache.core.cache;
 
 import com.mirson.gemini.cache.common.CacheConfigProperties;
-import com.mirson.gemini.cache.core.cache.CacheService;
 import org.redisson.api.RBatch;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RMapCacheAsync;
@@ -14,14 +13,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 二级缓存实现，也就redis
- * Redis缓存服务管理实现类
+ * 一级缓存实现，也就只有redis
  *
  * @author zoutongkun
  */
-public class RedisCacheServiceImpl implements CacheService {
+public class OneLevelCacheService implements CacheService {
 
-    private static final Logger logger = LoggerFactory.getLogger(RedisCacheServiceImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(OneLevelCacheService.class);
 
     private ExecutorService serviceCallExecutorService;
 
@@ -32,9 +30,9 @@ public class RedisCacheServiceImpl implements CacheService {
     /**
      * 初始化
      */
-    public RedisCacheServiceImpl(RedissonClient redissonClient,
-                                 ExecutorService serviceCallExecutorService,
-                                 CacheConfigProperties cacheConfigProperties) {
+    public OneLevelCacheService(RedissonClient redissonClient,
+                                ExecutorService serviceCallExecutorService,
+                                CacheConfigProperties cacheConfigProperties) {
         this.redissonClient = redissonClient;
         this.serviceCallExecutorService = serviceCallExecutorService;
         this.cacheConfigProperties = cacheConfigProperties;
@@ -49,7 +47,7 @@ public class RedisCacheServiceImpl implements CacheService {
      * @return
      */
     @Override
-    public Object getFromCache(final String cacheName, final Object cacheKey) {
+    public Object get(final String cacheName, final Object cacheKey) {
         if (StringUtils.isEmpty(cacheName) || cacheKey == null) {
             throw new IllegalArgumentException("Cache name or cache key can not be null!");
         }
@@ -105,7 +103,7 @@ public class RedisCacheServiceImpl implements CacheService {
      * @return
      */
     @Override
-    public boolean invalidateCache(final String[] cacheNames, final Object cacheKey) {
+    public boolean delete(final String[] cacheNames, final Object cacheKey) {
 
         if (cacheNames == null || cacheNames.length == 0) {
             throw new IllegalArgumentException(
@@ -130,7 +128,7 @@ public class RedisCacheServiceImpl implements CacheService {
      * @return
      */
     @Override
-    public boolean invalidateCache(final String[] cacheNames) {
+    public boolean delete(final String[] cacheNames) {
         for (String cacheName : cacheNames) {
             redissonClient.getMapCache(cacheName).delete();
         }
@@ -138,16 +136,11 @@ public class RedisCacheServiceImpl implements CacheService {
     }
 
     @Override
-    public boolean saveInRedisAsync(final String[] cacheNames, final Object cacheKey,
-                                    final Object cacheValue, long ttl) {
+    public boolean saveByAsync(final String[] cacheNames, final Object cacheKey,
+                               final Object cacheValue, long ttl) {
 
         // 异步线程池执行处理
-        serviceCallExecutorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                save(cacheNames, cacheKey, cacheValue, ttl);
-            }
-        });
+        serviceCallExecutorService.execute(() -> save(cacheNames, cacheKey, cacheValue, ttl));
         return true;
     }
 
@@ -159,14 +152,9 @@ public class RedisCacheServiceImpl implements CacheService {
      * @return
      */
     @Override
-    public boolean invalidateCacheAsync(final String[] cacheNames, final Object cacheKey) {
+    public boolean deleteByAsync(final String[] cacheNames, final Object cacheKey) {
 
-        serviceCallExecutorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                invalidateCache(cacheNames, cacheKey);
-            }
-        });
+        serviceCallExecutorService.execute(() -> delete(cacheNames, cacheKey));
 
         return true;
     }
@@ -178,13 +166,8 @@ public class RedisCacheServiceImpl implements CacheService {
      * @return
      */
     @Override
-    public boolean invalidateCacheAsync(final String[] cacheNames) {
-        serviceCallExecutorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                invalidateCache(cacheNames);
-            }
-        });
+    public boolean deleteByAsync(final String[] cacheNames) {
+        serviceCallExecutorService.execute(() -> delete(cacheNames));
         return true;
     }
 

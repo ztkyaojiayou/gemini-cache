@@ -5,6 +5,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 /**
  * 缓存辅助管理工具
+ * @author zoutongkun
  */
 public final class CacheUtil {
 

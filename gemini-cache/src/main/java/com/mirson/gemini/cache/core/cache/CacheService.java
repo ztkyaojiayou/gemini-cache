@@ -14,7 +14,7 @@ public interface CacheService {
      * @param cacheKey
      * @return
      */
-    Object getFromCache(String cacheName, Object cacheKey);
+    Object get(String cacheName, Object cacheKey);
 
     /**
      * 保存数据到缓存
@@ -34,7 +34,7 @@ public interface CacheService {
      * @param cacheKey
      * @return
      */
-    boolean invalidateCache(String[] cacheNames, Object cacheKey);
+    boolean delete(String[] cacheNames, Object cacheKey);
 
     /**
      * 清理缓存
@@ -42,7 +42,7 @@ public interface CacheService {
      * @param cacheNames
      * @return
      */
-    boolean invalidateCache(String[] cacheNames);
+    boolean delete(String[] cacheNames);
 
     /**
      * 异步保存数据到缓存
@@ -53,7 +53,7 @@ public interface CacheService {
      * @param ttl
      * @return
      */
-    boolean saveInRedisAsync(String[] cacheNames, Object cacheKey, Object cacheValue, long ttl);
+    boolean saveByAsync(String[] cacheNames, Object cacheKey, Object cacheValue, long ttl);
 
     /**
      * 异步清理缓存
@@ -62,7 +62,7 @@ public interface CacheService {
      * @param cacheKey
      * @return
      */
-    boolean invalidateCacheAsync(String[] cacheNames, Object cacheKey);
+    boolean deleteByAsync(String[] cacheNames, Object cacheKey);
 
     /**
      * 异步清理缓存
@@ -70,6 +70,6 @@ public interface CacheService {
      * @param cacheNames
      * @return
      */
-    boolean invalidateCacheAsync(String[] cacheNames);
+    boolean deleteByAsync(String[] cacheNames);
 
 }
